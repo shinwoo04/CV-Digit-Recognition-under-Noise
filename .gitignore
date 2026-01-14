@@ -16,3 +16,7 @@ __pycache__/
 # 기타 설정 파일
 .vscode/
 .idea/
+
+# 루트 경로의 제출 파일 및 CSV 무시
+submission*.csv
+*.csv

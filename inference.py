@@ -41,8 +41,8 @@ test_transforms = transforms.Compose([
 
 # 4. 모델 로드 및 설정 (v2 ResNet50 기준)
 def load_model(model_path):
-    # ResNet50 구조 생성
-    model = models.resnet50()
+    # ResNet18 구조 생성
+    model = models.resnet18()
     num_ftrs = model.fc.in_features
     model.fc = nn.Linear(num_ftrs, 10)
     
@@ -62,7 +62,7 @@ def run_inference():
         sys.exit() # 프로그램 종료
     
     # 모델 경로 지정 (v2 ResNet50 모델 사용)
-    model_path = './models/best_resnet50_model.pth'
+    model_path = './models/best_resnet18_model.pth'
     
     if not os.path.exists(model_path):
         print(f"에러: {model_path} 파일을 찾을 수 없습니다.")
@@ -87,8 +87,8 @@ def run_inference():
 
     # 결과 저장
     submission['digit'] = preds_list
-    submission.to_csv('submission_v2_final.csv', index=False)
-    print("\n추론 완료! 'submission_v2_final.csv' 파일이 저장되었습니다.")
+    submission.to_csv('submission_v1_final.csv', index=False)
+    print("\n추론 완료! 'submission_v1_final.csv' 파일이 저장되었습니다.")
 
 if __name__ == "__main__":
     run_inference()

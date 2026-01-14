@@ -7,10 +7,19 @@
 | 버전 |   모델   |      전처리      |      특이사항      | 검증 정확도 |
 |:----:|:--------:|:----------------:|:------------------:|:-----------:|
 |  v1  | ResNet18 | 기본 Resize(224) | Baseline (첫 시도) |   76.83%    |
-|  v2  | ResNet50 | Augmentation+    | ResNet50, Augment  |   84.39%    |
+|  v2  | ResNet50 | Augmentation+    | 리더보드 0.83823  |   84.39%    |
 
 --------------------------------------------------------------------------------
+[v1 vs v2 Analysis]
+- 주요 발견: v2에서 Private Score가 Public보다 약 2%p 높게 측정됨 (0.838 -> 0.858).
+- 분석: 
+    1. 데이터 증강(Augmentation)이 Overfitting을 방지하고 일반화 성능을 극대화함.
+    2. ResNet18보다 깊은 ResNet50의 모델 용량이 배경 글자 노이즈와 숫자를 분리하는 데 적합했음.
+- 남은 과제: 
+    - 아직 14%의 오답이 발생함. 배경 글자의 특정 색상/두께에 따른 취약점 분석 필요.
+    - 20 Epoch은 모델 수렴에 부족할 수 있음 -> v3에서 100 Epoch 시도 예정.
 
+---------------------------------------------------------------------------------
 # turn on the venv
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
 .\venv\Scripts\Activate.ps1
