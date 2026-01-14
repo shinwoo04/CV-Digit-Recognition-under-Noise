@@ -7,6 +7,10 @@
 | 버전 |   모델   |      전처리      |      특이사항      | 검증 정확도 |
 |:----:|:--------:|:----------------:|:------------------:|:-----------:|
 |  v1  | ResNet18 | 기본 Resize(224) | Baseline (첫 시도) |   76.83%    |
-|  v2  |          |                  |                    |             |
+|  v2  | ResNet50 | Augmentation+    | ResNet50, Augment  |   84.39%    |
 
 --------------------------------------------------------------------------------
+
+# turn on the venv
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+.\venv\Scripts\Activate.ps1

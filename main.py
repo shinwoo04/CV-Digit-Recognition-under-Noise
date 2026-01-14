@@ -70,6 +70,9 @@ class DaconDataset(Dataset):
 data_transforms = transforms.Compose([
     transforms.ToPILImage(),
     transforms.Resize((224, 224)), 
+    transforms.RandomRotation(15),           # ±15도 무작위 회전
+    transforms.RandomAffine(0, shear=12, scale=(0.8, 1.2)), # 비틀기 및 확대/축소
+    transforms.ColorJitter(brightness=0.2, contrast=0.2),   # 조명 변화 대응
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406],
                          std=[0.229, 0.224, 0.225])
@@ -83,7 +86,7 @@ train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
 
 # 5. 전이학습 모델 불러오기 
-model = models.resnet18(pretrained=True)
+model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
 
 # 마지막 출력층을 우리 문제(0~9, 10개 클래스)에 맞게 수정
 num_ftrs = model.fc.in_features
@@ -95,6 +98,7 @@ model = model.to(device)
 # 6. 손실함수(Loss) 및 최적화(Optimizer) 설정
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.0001)
+scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=3)
 
 EPOCHS = 20
 best_val_acc = 0.0
@@ -106,6 +110,7 @@ for epoch in tqdm(range(EPOCHS)):
    
     model.train()
     train_loss = 0.0
+    train_corrects = 0
     for images, labels in train_loader:
         images, labels = images.to(device), labels.to(device)
         
@@ -116,23 +121,34 @@ for epoch in tqdm(range(EPOCHS)):
         loss.backward()
         optimizer.step()
         
+        _, preds = torch.max(outputs, 1)
         train_loss += loss.item() * images.size(0)
-    
+        train_corrects += torch.sum(preds == labels.data)
+
     epoch_train_loss = train_loss / len(train_loader.dataset)
+    epoch_train_acc = train_corrects.double() / len(train_loader.dataset)
+    
     
     model.eval()
     val_corrects = 0
+    val_loss = 0.0
     with torch.inference_mode(): 
         for images, labels in val_loader:
             images, labels = images.to(device), labels.to(device)
             outputs = model(images)
+            loss = criterion(outputs, labels)
+
+            val_loss += loss.item() * images.size(0)
             _, preds = torch.max(outputs, 1)
             val_corrects += torch.sum(preds == labels.data)
-            
+
+    epoch_val_loss = val_loss / len(val_loader.dataset)        
     epoch_val_acc = val_corrects.double() / len(val_loader.dataset)
     
+    scheduler.step(epoch_val_loss)
+    
     # 결과 출력
-    print(f'Epoch {epoch+1}/{EPOCHS} | Train Loss: {epoch_train_loss:.4f} | Val Acc: {epoch_val_acc:.4f}')
+    print(f'Epoch {epoch+1}/{EPOCHS} | Train Loss: {epoch_train_loss:.4f} Acc: {epoch_train_acc:.4f} | Val Loss: {epoch_val_loss:.4f} Acc: {epoch_val_acc:.4f}')
     
     # 베스트 모델 저장 (Best Model Saving)
     if epoch_val_acc > best_val_acc:
@@ -140,7 +156,7 @@ for epoch in tqdm(range(EPOCHS)):
         save_path = './models'
         if not os.path.exists(save_path):
             os.makedirs(save_path)
-        torch.save(model.state_dict(), os.path.join(save_path, 'best_resnet18_model.pth'))
+        torch.save(model.state_dict(), os.path.join(save_path, 'best_resnet50_model.pth'))
         print(f"==> Best Model Saved in '{save_path}'! (Acc: {best_val_acc:.4f})")
 
 print(f"\n학습 완료! 최고 검증 정확도: {best_val_acc:.4f}")
